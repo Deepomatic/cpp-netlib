@@ -21,7 +21,7 @@ boost::network::http::impl::normal_delegate::normal_delegate(
 
 void boost::network::http::impl::normal_delegate::connect(
     boost::asio::ip::tcp::endpoint &endpoint, std::string host,
-    std::uint16_t source_port,
+    std::uint16_t source_port, optional<std::string> sni_hostname,
     std::function<void(boost::system::error_code const &)> handler) {
 
   // TODO(dberris): review parameter necessity.

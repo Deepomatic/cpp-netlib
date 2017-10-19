@@ -101,12 +101,14 @@ struct http_async_connection
     string_type host_ = host(request);
     std::uint16_t source_port = request.source_port();
 
+    auto sni_hostname = request.sni_hostname();
+
     auto self = this->shared_from_this();
     resolve_(resolver_, host_, port_,
              request_strand_.wrap(
                                   [=] (boost::system::error_code const &ec,
                                        resolver_iterator_pair endpoint_range) {
-                                    self->handle_resolved(host_, port_, source_port, get_body,
+                                    self->handle_resolved(host_, port_, source_port, sni_hostname, get_body,
                                                           callback, generator, ec, endpoint_range);
                                   }));
     if (timeout_ > 0) {
@@ -139,7 +141,7 @@ struct http_async_connection
   }
 
   void handle_resolved(string_type host, std::uint16_t port,
-                       std::uint16_t source_port, bool get_body,
+                       std::uint16_t source_port, optional<string_type> sni_hostname, bool get_body,
                        body_callback_function_type callback,
                        body_generator_function_type generator,
                        boost::system::error_code const& ec,
@@ -151,10 +153,10 @@ struct http_async_connection
       boost::asio::ip::tcp::endpoint endpoint(iter->endpoint().address(), port);
       auto self = this->shared_from_this();
       delegate_->connect(
-          endpoint, host, source_port,
+          endpoint, host, source_port, sni_hostname,
           request_strand_.wrap([=] (boost::system::error_code const &ec) {
               auto iter_copy = iter;
-              self->handle_connected(host, port, source_port, get_body, callback,
+              self->handle_connected(host, port, source_port, sni_hostname, get_body, callback,
                                      generator, std::make_pair(++iter_copy, resolver_iterator()), ec);
             }));
     } else {
@@ -163,7 +165,7 @@ struct http_async_connection
   }
 
   void handle_connected(string_type host, std::uint16_t port,
-                        std::uint16_t source_port, bool get_body,
+                        std::uint16_t source_port, optional<string_type> sni_hostname, bool get_body,
                         body_callback_function_type callback,
                         body_generator_function_type generator,
                         resolver_iterator_pair endpoint_range,
@@ -186,10 +188,10 @@ struct http_async_connection
         boost::asio::ip::tcp::endpoint endpoint(iter->endpoint().address(), port);
         auto self = this->shared_from_this();
         delegate_->connect(
-            endpoint, host, source_port,
+            endpoint, host, source_port, sni_hostname,
             request_strand_.wrap([=] (boost::system::error_code const &ec) {
                 auto iter_copy = iter;
-                self->handle_connected(host, port, source_port, get_body, callback,
+                self->handle_connected(host, port, source_port, sni_hostname, get_body, callback,
                                        generator, std::make_pair(++iter_copy, resolver_iterator()),
                                        ec);
               }));

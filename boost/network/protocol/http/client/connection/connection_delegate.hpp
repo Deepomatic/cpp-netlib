@@ -11,6 +11,7 @@
 #include <functional>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/streambuf.hpp>
+#include <boost/optional.hpp>
 
 namespace boost {
 namespace network {
@@ -19,7 +20,7 @@ namespace impl {
 
 struct connection_delegate {
   virtual void connect(boost::asio::ip::tcp::endpoint &endpoint, std::string host,
-                       std::uint16_t source_port,
+                       std::uint16_t source_port, optional<std::string> sni_hostname,
                        std::function<void(boost::system::error_code const &)> handler) = 0;
   virtual void write(
       boost::asio::streambuf &command_streambuf,

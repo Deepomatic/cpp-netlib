@@ -30,8 +30,9 @@ boost::network::http::impl::ssl_delegate::ssl_delegate(
 
 void boost::network::http::impl::ssl_delegate::connect(
     boost::asio::ip::tcp::endpoint &endpoint, std::string host,
-    std::uint16_t source_port,
+    std::uint16_t source_port, optional<std::string> sni_hostname,
     std::function<void(boost::system::error_code const &)> handler) {
+
   context_.reset(
       new boost::asio::ssl::context(boost::asio::ssl::context::method::sslv23_client));
   if (ciphers_) {
@@ -71,8 +72,13 @@ void boost::network::http::impl::ssl_delegate::connect(
   socket_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(
       *(tcp_socket_.get()), *context_));
 
-  if (sni_hostname_)
+  if (sni_hostname) { // at request level
+    SSL_set_tlsext_host_name(socket_->native_handle(), sni_hostname->c_str());
+  } else if (sni_hostname_) { // at client level
     SSL_set_tlsext_host_name(socket_->native_handle(), sni_hostname_->c_str());
+  }
+
+
   if (always_verify_peer_)
     socket_->set_verify_callback(boost::asio::ssl::rfc2818_verification(host));
   auto self = this->shared_from_this();

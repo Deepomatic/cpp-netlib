@@ -25,7 +25,7 @@ struct normal_delegate : connection_delegate {
   explicit normal_delegate(boost::asio::io_service &service);
 
   void connect(boost::asio::ip::tcp::endpoint &endpoint, std::string host,
-               std::uint16_t source_port,
+               std::uint16_t source_port, optional<std::string> sni_hostname,
                std::function<void(boost::system::error_code const &)> handler) override;
   void write(boost::asio::streambuf &command_streambuf,
              std::function<void(boost::system::error_code const &, size_t)> handler)

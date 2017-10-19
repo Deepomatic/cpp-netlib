@@ -33,7 +33,7 @@ struct ssl_delegate : public connection_delegate,
                optional<std::string> sni_hostname, long ssl_options);
 
   void connect(boost::asio::ip::tcp::endpoint &endpoint, std::string host,
-               std::uint16_t source_port,
+               std::uint16_t source_port, optional<std::string> sni_hostname,
                std::function<void(boost::system::error_code const &)> handler) override;
   void write(
       boost::asio::streambuf &command_streambuf,

@@ -50,29 +50,32 @@ namespace http {
  */
 template <class Tag>
 struct basic_request : public basic_message<Tag> {
-  mutable boost::network::uri::uri uri_;
-  std::uint16_t source_port_;
-  typedef basic_message<Tag> base_type;
-
  public:
   typedef Tag tag;
   typedef typename string<tag>::type string_type;
   typedef std::uint16_t port_type;
 
+ private:
+  mutable boost::network::uri::uri uri_;
+  std::uint16_t source_port_;
+  optional<string_type> sni_hostname_;
+  typedef basic_message<Tag> base_type;
+
+ public:
   explicit basic_request(string_type const& uri_)
-      : uri_(uri_), source_port_(0) {}
+      : uri_(uri_), source_port_(0), sni_hostname_() {}
 
   explicit basic_request(boost::network::uri::uri const& uri_)
-      : uri_(uri_), source_port_(0) {}
+      : uri_(uri_), source_port_(0), sni_hostname_() {}
 
   void uri(string_type const& new_uri) { uri_ = new_uri; }
 
   void uri(boost::network::uri::uri const& new_uri) { uri_ = new_uri; }
 
-  basic_request() : base_type(), source_port_(0) {}
+  basic_request() : base_type(), source_port_(0), sni_hostname_() {}
 
   basic_request(basic_request const& other)
-      : base_type(other), uri_(other.uri_), source_port_(other.source_port_) {}
+      : base_type(other), uri_(other.uri_), source_port_(other.source_port_), sni_hostname_(other.sni_hostname_) {}
 
   basic_request& operator=(basic_request rhs) {
     rhs.swap(*this);
@@ -85,6 +88,7 @@ struct basic_request : public basic_message<Tag> {
     base_ref.swap(this_ref);
     boost::swap(other.uri_, this->uri_);
     boost::swap(other.source_port_, this->source_port_);
+    boost::swap(other.sni_hostname_, this->sni_hostname_);
   }
 
   string_type const host() const { return uri_.host(); }
@@ -114,6 +118,10 @@ struct basic_request : public basic_message<Tag> {
   void source_port(const std::uint16_t port) { source_port_ = port; }
 
   std::uint16_t source_port() const { return source_port_; }
+
+  void sni_hostname(string_type const &sni_hostname) { sni_hostname_ = sni_hostname; }
+
+  const optional<string_type> &sni_hostname() const { return sni_hostname_; }
 };
 
 /** This is the implementation of a POD request type
