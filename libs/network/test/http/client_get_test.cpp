@@ -46,30 +46,6 @@ TYPED_TEST(HTTPClientTest, GetHTTPSTest) {
   }
 }
 
-#endif
-
-TYPED_TEST(HTTPClientTest, TemporaryClientObjectTest) {
-  using client = TypeParam;
-  typename client::request request("http://cpp-netlib.org/");
-  typename client::response response;
-  ASSERT_NO_THROW(response = client().get(request));
-  auto range = headers(response);
-  ASSERT_TRUE(!boost::empty(range));
-  try {
-    auto data = body(response);
-    std::cout << data;
-  } catch (...) {
-    FAIL() << "Caught exception while retrieving body from GET request";
-  }
-  EXPECT_EQ("HTTP/1.", response.version().substr(0, 7));
-  EXPECT_TRUE(response.status() == 200u ||
-              (response.status() >= 300 && response.status() < 400));
-}
-
-
-typedef boost::network::http::basic_client<boost::network::http::tags::http_async_8bit_tcp_resolve, 1, 1> async_client;
-#define EXC_PTR(cmd) try { cmd } catch (const std::exception_ptr& ex) { std::rethrow_exception(ex); }
-
 TYPED_TEST(HTTPClientTest, GetRequestSNI) {
   using client = TypeParam;
   // need sni_hostname to be set
@@ -93,4 +69,24 @@ TYPED_TEST(HTTPClientTest, GetRequestSNI) {
     FAIL() << "Caught exception while retrieving body from GET request";
   }
 
+}
+
+#endif
+
+TYPED_TEST(HTTPClientTest, TemporaryClientObjectTest) {
+  using client = TypeParam;
+  typename client::request request("http://cpp-netlib.org/");
+  typename client::response response;
+  ASSERT_NO_THROW(response = client().get(request));
+  auto range = headers(response);
+  ASSERT_TRUE(!boost::empty(range));
+  try {
+    auto data = body(response);
+    std::cout << data;
+  } catch (...) {
+    FAIL() << "Caught exception while retrieving body from GET request";
+  }
+  EXPECT_EQ("HTTP/1.", response.version().substr(0, 7));
+  EXPECT_TRUE(response.status() == 200u ||
+              (response.status() >= 300 && response.status() < 400));
 }
