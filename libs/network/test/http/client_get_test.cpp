@@ -70,40 +70,27 @@ TYPED_TEST(HTTPClientTest, TemporaryClientObjectTest) {
 typedef boost::network::http::basic_client<boost::network::http::tags::http_async_8bit_tcp_resolve, 1, 1> async_client;
 #define EXC_PTR(cmd) try { cmd } catch (const std::exception_ptr& ex) { std::rethrow_exception(ex); }
 
-TYPED_TEST(HTTPClientTest, ReuseResponse) {
+TYPED_TEST(HTTPClientTest, GetRequestSNI) {
+  using client = TypeParam;
+  // need sni_hostname to be set
+  typename client::request request("https://www.guide-du-chien.com/wp-content/uploads/2016/10/Beagle.jpg");
+  typename client::response response;
 
-  async_client client;
+  // trying without setting sni_hostname
+  ASSERT_NO_THROW(response = client().get(request));
+  // raise "tlsv1 alert internal error"
+  ASSERT_THROW(response.status(), std::exception_ptr);
 
-  async_client::request req("https://static.deepomatic.com/compass/NVR_ch2_J_20161209122514_20161209122514_orig.jpg");
+  // setting sni_hostname
+  request.sni_hostname(request.host());
+  ASSERT_NO_THROW(response = client().get(request));
+  EXPECT_EQ(200u, response.status());
 
-  req.sni_hostname(req.host());
-
-  auto response = client.get(req);
-
-  while (!ready(response));
-
-  EXC_PTR(response.status(););
-
-  // we get the expected headers and body
-  auto hdrs = headers(response);
-
-  for (auto &h : hdrs) {
-      std::cout << h.first << ": " << h.second << std::endl;
-  }
-
-  std::cout << "---" << std::endl;
-
-  req.uri("http://example.com"); // changing the url
-
-  response = client.get(req);
-
-  while (!ready(response));
-
-  // here the headers are the same as the previous response, they should be those from example.com
-  auto hdrs2 = headers(response);
-
-  for (auto &h : hdrs2) {
-      std::cout << h.first << ": " << h.second << std::endl;
+  try {
+    auto data = body(response);
+    std::cout << "Body size: " << data.size() << std::endl;
+  } catch (...) {
+    FAIL() << "Caught exception while retrieving body from GET request";
   }
 
 }
